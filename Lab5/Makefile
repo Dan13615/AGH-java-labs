@@ -1,4 +1,8 @@
-OBJ = i2jp/oop/Gender.java i2jp/oop/*.class
+compile:
+	javac -d bin -sourcepath src src/i2jp/oop/*.java StudentManagerApp.java
+
+run:
+	java -cp bin StudentManagerApp
 
 clean:
-	rm -f $(OBJ)
+	rm -rf bin/

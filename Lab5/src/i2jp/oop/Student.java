@@ -1,3 +1,5 @@
+// File: src/i2jp/oop/Student.java
+// Author: Student & Group Manager Implementation
 package i2jp.oop;
 
 import java.util.*;

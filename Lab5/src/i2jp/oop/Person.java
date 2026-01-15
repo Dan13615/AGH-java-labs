@@ -1,3 +1,5 @@
+// File: src/i2jp/oop/Person.java
+// Author: Student & Group Manager Implementation
 package i2jp.oop;
 
 import java.time.LocalDate;
@@ -69,6 +71,11 @@ public class Person {
         this.gender = gender;
     }
 
+    // Helper to get formatted birth date
+    public String getBirthDateFormatted() {
+        return birthDate.format(DMY);
+    }
+
     // --- Utility methods ---
     public int getAgeYears() {
         return Period.between(birthDate, LocalDate.now()).getYears();
@@ -84,5 +91,10 @@ public class Person {
         String s = Long.toString(n, 36).toUpperCase();
         int pad = len - s.length();
         return (pad > 0 ? "0".repeat(pad) : "") + s;
+    }
+
+    // Reset counter for testing purposes
+    public static void resetCounter() {
+        COUNTER.set(1L);
     }
 }
