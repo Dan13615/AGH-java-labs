@@ -1,0 +1,33 @@
+2026-01-15 22:09:27.903 INFO  [main] StudentManagerApp - === Student & Group Manager Application Starting ===
+2026-01-15 22:09:27.913 INFO  [main] StudentManagerApp - Java version: 17.0.17
+2026-01-15 22:09:27.914 WARN  [main] StudentManagerApp - Configuration file not found: console.properties
+2026-01-15 22:09:27.924 INFO  [main] StudentManagerApp - Created default configuration file: console.properties
+2026-01-15 22:09:27.926 WARN  [main] StudentManagerApp - Invalid menu option entered: ''
+2026-01-15 22:09:36.931 INFO  [main] StudentManagerApp - Attempting to load students from: students.csv
+2026-01-15 22:09:36.938 DEBUG [main] i2jp.oop.Person - Created Person id=0000001 name=Anna Kowalska birth=15.03.2003 gender=OTHER
+2026-01-15 22:09:36.938 INFO  [main] i2jp.oop.Student - New Student created: index=S12345 personId=0000001
+2026-01-15 22:09:36.939 DEBUG [main] i2jp.oop.Student - Added grade=5.0 to student index=S12345 (now 1 grades)
+2026-01-15 22:09:36.939 DEBUG [main] i2jp.oop.Student - Added grade=4.5 to student index=S12345 (now 2 grades)
+2026-01-15 22:09:36.940 DEBUG [main] i2jp.oop.Student - Added grade=4.0 to student index=S12345 (now 3 grades)
+2026-01-15 22:09:36.940 DEBUG [main] i2jp.oop.Person - Created Person id=0000002 name=Piotr Nowak birth=02.09.2002 gender=OTHER
+2026-01-15 22:09:36.941 INFO  [main] i2jp.oop.Student - New Student created: index=S67890 personId=0000002
+2026-01-15 22:09:36.941 DEBUG [main] i2jp.oop.Student - Added grade=4.0 to student index=S67890 (now 1 grades)
+2026-01-15 22:09:36.941 DEBUG [main] i2jp.oop.Student - Added grade=4.0 to student index=S67890 (now 2 grades)
+2026-01-15 22:09:36.941 DEBUG [main] i2jp.oop.Student - Added grade=3.5 to student index=S67890 (now 3 grades)
+2026-01-15 22:09:36.942 DEBUG [main] i2jp.oop.Person - Created Person id=0000003 name=Julia Mazur birth=01.01.2004 gender=OTHER
+2026-01-15 22:09:36.999 INFO  [main] i2jp.oop.Student - New Student created: index=S11111 personId=0000003
+2026-01-15 22:09:37.000 DEBUG [main] i2jp.oop.Student - Added grade=3.5 to student index=S11111 (now 1 grades)
+2026-01-15 22:09:37.001 DEBUG [main] i2jp.oop.Student - Added grade=3.0 to student index=S11111 (now 2 grades)
+2026-01-15 22:09:37.001 INFO  [main] StudentManagerApp - Student import completed: 3 imported, 0 errors
+2026-01-15 22:09:39.753 INFO  [main] StudentManagerApp - Attempting to load groups from: groups.csv
+2026-01-15 22:09:39.756 INFO  [main] i2jp.oop.Group - Group created: name='G1', description='Java Monday'
+2026-01-15 22:09:39.757 INFO  [main] i2jp.oop.GroupRegistry - Assigned personId=0000001 to group=G1
+2026-01-15 22:09:39.758 INFO  [main] i2jp.oop.Group - Student index=S12345 added to group='G1'
+2026-01-15 22:09:39.758 INFO  [main] i2jp.oop.GroupRegistry - Assigned personId=0000002 to group=G1
+2026-01-15 22:09:39.759 INFO  [main] i2jp.oop.Group - Student index=S67890 added to group='G1'
+2026-01-15 22:09:39.759 INFO  [main] i2jp.oop.Group - Group created: name='G2', description='Java Friday'
+2026-01-15 22:09:39.760 INFO  [main] i2jp.oop.GroupRegistry - Assigned personId=0000003 to group=G2
+2026-01-15 22:09:39.760 INFO  [main] i2jp.oop.Group - Student index=S11111 added to group='G2'
+2026-01-15 22:09:39.760 INFO  [main] StudentManagerApp - Group import completed: 2 groups loaded
+2026-01-15 22:09:58.391 INFO  [main] StudentManagerApp - User requested exit
+2026-01-15 22:09:58.392 INFO  [main] StudentManagerApp - === Application Shutting Down ===
