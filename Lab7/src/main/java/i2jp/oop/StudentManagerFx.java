@@ -1,0 +1,672 @@
+package i2jp.oop;
+
+import javafx.application.Application;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.*;
+import javafx.stage.FileChooser;
+import javafx.stage.Stage;
+
+import javafx.application.Application;
+import javafx.stage.Stage;
+import java.io.*;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.*;
+import java.util.stream.Collectors;
+
+// ==================== DOMAIN CLASSES ====================
+
+class Student {
+    private String firstName;
+    private String lastName;
+    private LocalDate birthDate;
+    private String indexNumber;
+    private Map<String, Double> grades;
+    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+    private static final Set<Double> VALID_GRADES = Set.of(2.0, 3.0, 3.5, 4.0, 4.5, 5.0);
+
+    public Student(String firstName, String lastName, LocalDate birthDate, String indexNumber) {
+        validateFirstName(firstName);
+        validateLastName(lastName);
+        validateBirthDate(birthDate);
+        validateIndexNumber(indexNumber);
+
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.birthDate = birthDate;
+        this.indexNumber = indexNumber;
+        this.grades = new HashMap<>();
+    }
+
+    private void validateFirstName(String firstName) {
+        if (firstName == null || firstName.trim().isEmpty()) {
+            throw new IllegalArgumentException("First name cannot be empty");
+        }
+    }
+
+    private void validateLastName(String lastName) {
+        if (lastName == null || lastName.trim().isEmpty()) {
+            throw new IllegalArgumentException("Last name cannot be empty");
+        }
+    }
+
+    private void validateBirthDate(LocalDate birthDate) {
+        if (birthDate == null) {
+            throw new IllegalArgumentException("Birth date cannot be null");
+        }
+        if (birthDate.isAfter(LocalDate.now())) {
+            throw new IllegalArgumentException("Birth date cannot be in the future");
+        }
+    }
+
+    private void validateIndexNumber(String indexNumber) {
+        if (indexNumber == null || indexNumber.trim().isEmpty()) {
+            throw new IllegalArgumentException("Index number cannot be empty");
+        }
+    }
+
+    public void addGrade(String subject, double grade) {
+        if (!VALID_GRADES.contains(grade)) {
+            throw new IllegalArgumentException("Invalid grade: " + grade + ". Allowed: 2.0, 3.0, 3.5, 4.0, 4.5, 5.0");
+        }
+        grades.put(subject, grade);
+    }
+
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public LocalDate getBirthDate() {
+        return birthDate;
+    }
+
+    public String getIndexNumber() {
+        return indexNumber;
+    }
+
+    public Map<String, Double> getGrades() {
+        return new HashMap<>(grades);
+    }
+
+    public String getBirthDateFormatted() {
+        return birthDate.format(DATE_FORMAT);
+    }
+
+    public double getAverageGrade() {
+        return grades.isEmpty() ? 0.0 : grades.values().stream().mapToDouble(Double::doubleValue).average().orElse(0.0);
+    }
+
+    public String toCsvLine() {
+        return String.join(",", firstName, lastName, getBirthDateFormatted(), indexNumber);
+    }
+
+    public static Student fromCsvLine(String line) {
+        String[] parts = line.split(",");
+        if (parts.length < 4) {
+            throw new IllegalArgumentException("Invalid CSV format: expected 4 fields");
+        }
+        try {
+            LocalDate date = LocalDate.parse(parts[2].trim(), DATE_FORMAT);
+            return new Student(parts[0].trim(), parts[1].trim(), date, parts[3].trim());
+        } catch (DateTimeParseException e) {
+            throw new IllegalArgumentException("Invalid date format: " + parts[2]);
+        }
+    }
+
+    @Override
+    public String toString() {
+        return firstName + " " + lastName + " (" + indexNumber + ")";
+    }
+}
+
+class Group {
+    private String name;
+    private String description;
+    private List<Student> students;
+    private int maxCapacity;
+
+    public Group(String name, String description) {
+        validateName(name);
+        this.name = name;
+        this.description = description == null ? "" : description;
+        this.students = new ArrayList<>();
+        this.maxCapacity = 50;
+    }
+
+    private void validateName(String name) {
+        if (name == null || name.trim().isEmpty()) {
+            throw new IllegalArgumentException("Group name cannot be empty");
+        }
+    }
+
+    public void addStudent(Student student) {
+        if (students.size() >= maxCapacity) {
+            throw new IllegalStateException("Group is at maximum capacity (" + maxCapacity + ")");
+        }
+        if (students.stream().anyMatch(s -> s.getIndexNumber().equals(student.getIndexNumber()))) {
+            throw new IllegalArgumentException(
+                    "Student with index " + student.getIndexNumber() + " already exists in this group");
+        }
+        students.add(student);
+    }
+
+    public void removeStudent(Student student) {
+        if (!students.remove(student)) {
+            throw new IllegalArgumentException("Student not found in this group");
+        }
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public List<Student> getStudents() {
+        return new ArrayList<>(students);
+    }
+
+    public void setDescription(String description) {
+        this.description = description == null ? "" : description;
+    }
+
+    @Override
+    public String toString() {
+        return name + " (" + students.size() + " students)";
+    }
+}
+
+class StudentRegistry {
+    private Map<String, Group> groups;
+
+    public StudentRegistry() {
+        this.groups = new HashMap<>();
+    }
+
+    public void addGroup(Group group) {
+        if (groups.containsKey(group.getName())) {
+            throw new IllegalArgumentException("Group '" + group.getName() + "' already exists");
+        }
+        groups.put(group.getName(), group);
+    }
+
+    public Group getGroup(String name) {
+        return groups.get(name);
+    }
+
+    public List<Group> getAllGroups() {
+        return new ArrayList<>(groups.values());
+    }
+
+    public void transferStudent(Student student, Group fromGroup, Group toGroup) {
+        fromGroup.removeStudent(student);
+        try {
+            toGroup.addStudent(student);
+        } catch (Exception e) {
+            fromGroup.addStudent(student);
+            throw e;
+        }
+    }
+
+    public void importFromCsv(File file, Group targetGroup) throws IOException {
+        int imported = 0;
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.trim().isEmpty())
+                    continue;
+                try {
+                    Student student = Student.fromCsvLine(line);
+                    targetGroup.addStudent(student);
+                    imported++;
+                } catch (Exception e) {
+                    throw new IOException("Error on line: " + line + " - " + e.getMessage());
+                }
+            }
+        }
+    }
+
+    public void exportToCsv(File file, Group group) throws IOException {
+        try (PrintWriter writer = new PrintWriter(new FileWriter(file))) {
+            for (Student student : group.getStudents()) {
+                writer.println(student.toCsvLine());
+            }
+        }
+    }
+}
+
+// ==================== GUI APPLICATION ====================
+
+public class StudentManagerFx extends Application {
+    private StudentRegistry registry;
+    private ListView<Group> groupsListView;
+    private TableView<Student> studentsTable;
+    private ObservableList<Group> groupsList;
+    private ObservableList<Student> studentsList;
+    private Label statusLabel;
+    private Group currentGroup;
+
+    @Override
+    public void start(Stage stage) {
+        registry = new StudentRegistry();
+        groupsList = FXCollections.observableArrayList();
+        studentsList = FXCollections.observableArrayList();
+
+        BorderPane root = new BorderPane();
+        root.setTop(createMenuBar(stage));
+        root.setLeft(createGroupsPanel());
+        root.setCenter(createStudentsPanel());
+        root.setRight(createActionsPanel());
+        root.setBottom(createStatusBar());
+
+        Scene scene = new Scene(root, 1100, 650);
+        stage.setScene(scene);
+        stage.setTitle("Student & Group Manager — JavaFX");
+        stage.show();
+
+        initializeSampleData();
+    }
+
+    private MenuBar createMenuBar(Stage stage) {
+        MenuBar menuBar = new MenuBar();
+
+        Menu fileMenu = new Menu("File");
+        MenuItem loadCsv = new MenuItem("Load CSV...");
+        MenuItem saveCsv = new MenuItem("Save CSV...");
+        MenuItem exit = new MenuItem("Exit");
+
+        loadCsv.setOnAction(e -> handleLoadCsv(stage));
+        saveCsv.setOnAction(e -> handleSaveCsv(stage));
+        exit.setOnAction(e -> stage.close());
+
+        fileMenu.getItems().addAll(loadCsv, saveCsv, new SeparatorMenuItem(), exit);
+        menuBar.getMenus().add(fileMenu);
+
+        return menuBar;
+    }
+
+    private VBox createGroupsPanel() {
+        VBox panel = new VBox(10);
+        panel.setPadding(new Insets(10));
+        panel.setPrefWidth(250);
+        panel.setStyle("-fx-background-color: #f4f4f4;");
+
+        Label title = new Label("Groups");
+        title.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
+
+        groupsListView = new ListView<>(groupsList);
+        groupsListView.setPrefHeight(400);
+        groupsListView.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null) {
+                loadStudentsForGroup(newVal);
+            }
+        });
+
+        Button addGroupBtn = new Button("Add Group");
+        addGroupBtn.setMaxWidth(Double.MAX_VALUE);
+        addGroupBtn.setOnAction(e -> handleAddGroup());
+
+        Button editDescBtn = new Button("Edit Description");
+        editDescBtn.setMaxWidth(Double.MAX_VALUE);
+        editDescBtn.setOnAction(e -> handleEditDescription());
+
+        panel.getChildren().addAll(title, groupsListView, addGroupBtn, editDescBtn);
+        return panel;
+    }
+
+    private VBox createStudentsPanel() {
+        VBox panel = new VBox(10);
+        panel.setPadding(new Insets(10));
+
+        Label title = new Label("Students");
+        title.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
+
+        studentsTable = new TableView<>(studentsList);
+
+        TableColumn<Student, String> firstNameCol = new TableColumn<>("First Name");
+        firstNameCol.setCellValueFactory(new PropertyValueFactory<>("firstName"));
+        firstNameCol.setPrefWidth(120);
+
+        TableColumn<Student, String> lastNameCol = new TableColumn<>("Last Name");
+        lastNameCol.setCellValueFactory(new PropertyValueFactory<>("lastName"));
+        lastNameCol.setPrefWidth(120);
+
+        TableColumn<Student, String> birthDateCol = new TableColumn<>("Birth Date");
+        birthDateCol
+                .setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getBirthDateFormatted()));
+        birthDateCol.setPrefWidth(100);
+
+        TableColumn<Student, String> indexCol = new TableColumn<>("Index Number");
+        indexCol.setCellValueFactory(new PropertyValueFactory<>("indexNumber"));
+        indexCol.setPrefWidth(120);
+
+        TableColumn<Student, String> avgGradeCol = new TableColumn<>("Avg Grade");
+        avgGradeCol.setCellValueFactory(
+                cellData -> new SimpleStringProperty(String.format("%.2f", cellData.getValue().getAverageGrade())));
+        avgGradeCol.setPrefWidth(80);
+
+        studentsTable.getColumns().addAll(firstNameCol, lastNameCol, birthDateCol, indexCol, avgGradeCol);
+
+        panel.getChildren().addAll(title, studentsTable);
+        VBox.setVgrow(studentsTable, Priority.ALWAYS);
+
+        return panel;
+    }
+
+    private VBox createActionsPanel() {
+        VBox panel = new VBox(15);
+        panel.setPadding(new Insets(10));
+        panel.setPrefWidth(280);
+        panel.setStyle("-fx-background-color: #f4f4f4;");
+
+        Label title = new Label("Actions");
+        title.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
+
+        // Add Student Form
+        Label addStudentLabel = new Label("Add Student");
+        addStudentLabel.setStyle("-fx-font-weight: bold;");
+
+        TextField firstNameField = new TextField();
+        firstNameField.setPromptText("First Name");
+
+        TextField lastNameField = new TextField();
+        lastNameField.setPromptText("Last Name");
+
+        TextField birthDateField = new TextField();
+        birthDateField.setPromptText("Birth Date (dd.MM.yyyy)");
+
+        TextField indexField = new TextField();
+        indexField.setPromptText("Index Number");
+
+        Button addStudentBtn = new Button("Add Student");
+        addStudentBtn.setMaxWidth(Double.MAX_VALUE);
+        addStudentBtn.setOnAction(e -> {
+            handleAddStudent(firstNameField.getText(), lastNameField.getText(),
+                    birthDateField.getText(), indexField.getText());
+            firstNameField.clear();
+            lastNameField.clear();
+            birthDateField.clear();
+            indexField.clear();
+        });
+
+        Separator sep1 = new Separator();
+
+        // Transfer Student
+        Label transferLabel = new Label("Transfer Student");
+        transferLabel.setStyle("-fx-font-weight: bold;");
+
+        ComboBox<Group> targetGroupCombo = new ComboBox<>();
+        targetGroupCombo.setPromptText("Select target group");
+        targetGroupCombo.setMaxWidth(Double.MAX_VALUE);
+        targetGroupCombo.setItems(groupsList);
+
+        Button transferBtn = new Button("Move to Group");
+        transferBtn.setMaxWidth(Double.MAX_VALUE);
+        transferBtn.setOnAction(e -> handleTransferStudent(targetGroupCombo.getValue()));
+
+        Separator sep2 = new Separator();
+
+        // Remove Student
+        Button removeStudentBtn = new Button("Remove Selected Student");
+        removeStudentBtn.setMaxWidth(Double.MAX_VALUE);
+        removeStudentBtn.setOnAction(e -> handleRemoveStudent());
+
+        panel.getChildren().addAll(
+                title,
+                addStudentLabel, firstNameField, lastNameField, birthDateField, indexField, addStudentBtn,
+                sep1,
+                transferLabel, targetGroupCombo, transferBtn,
+                sep2,
+                removeStudentBtn);
+
+        return panel;
+    }
+
+    private HBox createStatusBar() {
+        HBox statusBar = new HBox();
+        statusBar.setPadding(new Insets(5, 10, 5, 10));
+        statusBar.setStyle("-fx-background-color: #e0e0e0;");
+
+        statusLabel = new Label("Ready");
+        statusBar.getChildren().add(statusLabel);
+
+        return statusBar;
+    }
+
+    private void handleAddGroup() {
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setTitle("Add Group");
+        dialog.setHeaderText("Create a new group");
+        dialog.setContentText("Group name:");
+
+        dialog.showAndWait().ifPresent(name -> {
+            try {
+                TextInputDialog descDialog = new TextInputDialog();
+                descDialog.setTitle("Group Description");
+                descDialog.setHeaderText("Add description (optional)");
+                descDialog.setContentText("Description:");
+
+                String description = descDialog.showAndWait().orElse("");
+
+                Group group = new Group(name, description);
+                registry.addGroup(group);
+                groupsList.add(group);
+                updateStatus("Group '" + name + "' created successfully");
+                showInfo("Success", "Group created successfully");
+            } catch (Exception e) {
+                showError("Error", e.getMessage());
+            }
+        });
+    }
+
+    private void handleEditDescription() {
+        Group selected = groupsListView.getSelectionModel().getSelectedItem();
+        if (selected == null) {
+            showWarning("No Selection", "Please select a group to edit");
+            return;
+        }
+
+        TextInputDialog dialog = new TextInputDialog(selected.getDescription());
+        dialog.setTitle("Edit Description");
+        dialog.setHeaderText("Edit group description");
+        dialog.setContentText("Description:");
+
+        dialog.showAndWait().ifPresent(description -> {
+            selected.setDescription(description);
+            updateStatus("Description updated for group '" + selected.getName() + "'");
+            groupsListView.refresh();
+        });
+    }
+
+    private void handleAddStudent(String firstName, String lastName, String birthDateStr, String indexNumber) {
+        if (currentGroup == null) {
+            showWarning("No Group Selected", "Please select a group first");
+            return;
+        }
+
+        try {
+            LocalDate birthDate = LocalDate.parse(birthDateStr, DateTimeFormatter.ofPattern("dd.MM.yyyy"));
+            Student student = new Student(firstName, lastName, birthDate, indexNumber);
+            currentGroup.addStudent(student);
+            studentsList.add(student);
+            updateStatus("Student added: " + student);
+            showInfo("Success", "Student added successfully");
+        } catch (DateTimeParseException e) {
+            showError("Invalid Date", "Please use format dd.MM.yyyy (e.g., 15.03.2000)");
+        } catch (Exception e) {
+            showError("Error", e.getMessage());
+        }
+    }
+
+    private void handleTransferStudent(Group targetGroup) {
+        Student selected = studentsTable.getSelectionModel().getSelectedItem();
+        if (selected == null) {
+            showWarning("No Selection", "Please select a student to transfer");
+            return;
+        }
+        if (targetGroup == null) {
+            showWarning("No Target", "Please select a target group");
+            return;
+        }
+        if (currentGroup == targetGroup) {
+            showWarning("Same Group", "Student is already in this group");
+            return;
+        }
+
+        try {
+            registry.transferStudent(selected, currentGroup, targetGroup);
+            studentsList.remove(selected);
+            updateStatus("Student transferred: " + selected + " → " + targetGroup.getName());
+            showInfo("Success", "Student transferred successfully");
+        } catch (Exception e) {
+            showError("Transfer Error", e.getMessage());
+        }
+    }
+
+    private void handleRemoveStudent() {
+        Student selected = studentsTable.getSelectionModel().getSelectedItem();
+        if (selected == null) {
+            showWarning("No Selection", "Please select a student to remove");
+            return;
+        }
+
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle("Confirm Removal");
+        confirm.setHeaderText("Remove student?");
+        confirm.setContentText("Are you sure you want to remove " + selected + "?");
+
+        confirm.showAndWait().ifPresent(response -> {
+            if (response == ButtonType.OK) {
+                try {
+                    currentGroup.removeStudent(selected);
+                    studentsList.remove(selected);
+                    updateStatus("Student removed: " + selected);
+                } catch (Exception e) {
+                    showError("Error", e.getMessage());
+                }
+            }
+        });
+    }
+
+    private void handleLoadCsv(Stage stage) {
+        if (currentGroup == null) {
+            showWarning("No Group Selected", "Please select a group to import students into");
+            return;
+        }
+
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Load CSV File");
+        fileChooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("CSV Files", "*.csv"));
+
+        File file = fileChooser.showOpenDialog(stage);
+        if (file != null) {
+            try {
+                int beforeCount = currentGroup.getStudents().size();
+                registry.importFromCsv(file, currentGroup);
+                loadStudentsForGroup(currentGroup);
+                int imported = currentGroup.getStudents().size() - beforeCount;
+                updateStatus("Imported " + imported + " students from " + file.getName());
+                showInfo("Import Success", "Imported " + imported + " students successfully");
+            } catch (IOException e) {
+                showError("Import Error", e.getMessage());
+            }
+        }
+    }
+
+    private void handleSaveCsv(Stage stage) {
+        if (currentGroup == null) {
+            showWarning("No Group Selected", "Please select a group to export");
+            return;
+        }
+
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Save CSV File");
+        fileChooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("CSV Files", "*.csv"));
+        fileChooser.setInitialFileName(currentGroup.getName() + ".csv");
+
+        File file = fileChooser.showSaveDialog(stage);
+        if (file != null) {
+            try {
+                registry.exportToCsv(file, currentGroup);
+                updateStatus("Exported " + currentGroup.getStudents().size() + " students to " + file.getName());
+                showInfo("Export Success", "Students exported successfully");
+            } catch (IOException e) {
+                showError("Export Error", e.getMessage());
+            }
+        }
+    }
+
+    private void loadStudentsForGroup(Group group) {
+        currentGroup = group;
+        studentsList.clear();
+        studentsList.addAll(group.getStudents());
+        updateStatus("Loaded group: " + group.getName() + " (" + group.getStudents().size() + " students)");
+    }
+
+    private void updateStatus(String message) {
+        statusLabel.setText(message);
+    }
+
+    private void showError(String title, String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+
+    private void showWarning(String title, String message) {
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+
+    private void showInfo(String title, String message) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+
+    private void initializeSampleData() {
+        try {
+            Group groupA = new Group("Group A", "Computer Science students");
+            Group groupB = new Group("Group B", "Software Engineering students");
+
+            registry.addGroup(groupA);
+            registry.addGroup(groupB);
+
+            groupA.addStudent(new Student("Jan", "Kowalski", LocalDate.of(2000, 5, 15), "123456"));
+            groupA.addStudent(new Student("Anna", "Nowak", LocalDate.of(2001, 3, 20), "123457"));
+            groupB.addStudent(new Student("Piotr", "Wiśniewski", LocalDate.of(2000, 8, 10), "123458"));
+
+            groupsList.addAll(registry.getAllGroups());
+            updateStatus("Sample data loaded");
+        } catch (Exception e) {
+            showError("Initialization Error", e.getMessage());
+        }
+    }
+
+    public static void main(String[] args) {
+        launch(args);
+    }
+}
