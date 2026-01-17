@@ -1,6 +1,3 @@
-// File: StudentManagerApp.java
-// Complete Student & Group Manager with Log4j 2 logging
-
 import i2jp.oop.*;
 import java.io.*;
 import java.nio.file.*;
@@ -13,11 +10,9 @@ import org.apache.logging.log4j.Logger;
 public class StudentManagerApp {
     private static final Logger log = LogManager.getLogger(StudentManagerApp.class);
 
-    // Repositories
     private static final Map<String, Student> studentRepo = new HashMap<>();
     private static final Map<String, Group> groupRepo = new HashMap<>();
 
-    // Configuration
     private static Properties config = new Properties();
     private static final String CONFIG_FILE = "console.properties";
     private static String delimiter = ";";
@@ -110,8 +105,6 @@ public class StudentManagerApp {
         System.out.print("Select option: ");
     }
 
-    // ===== CONFIGURATION MANAGEMENT =====
-
     private static void loadConfiguration() {
         Path configPath = Paths.get(CONFIG_FILE);
 
@@ -199,8 +192,6 @@ public class StudentManagerApp {
             System.out.println("[ERROR] Could not save configuration: " + e.getMessage());
         }
     }
-
-    // ===== STUDENT CSV OPERATIONS =====
 
     private static void loadStudentsFromCsv() {
         Path path = Paths.get(studentsFile);
@@ -301,8 +292,6 @@ public class StudentManagerApp {
         }
     }
 
-    // ===== GROUP CSV OPERATIONS =====
-
     private static void loadGroupsFromCsv() {
         Path path = Paths.get(groupsFile);
         log.info("Attempting to load groups from: {}", path);
@@ -387,8 +376,6 @@ public class StudentManagerApp {
             System.out.println("Export failed: " + e.getMessage());
         }
     }
-
-    // ===== INTERACTIVE OPERATIONS =====
 
     private static void addNewStudent() {
         log.info("User adding new student interactively");
@@ -594,8 +581,6 @@ public class StudentManagerApp {
 
         System.out.printf("\nGroup average: %.2f%n", groupAvg.orElse(0.0));
     }
-
-    // ===== HELPER METHODS =====
 
     private static List<Double> parseGrades(String gradesRaw) {
         List<Double> grades = new ArrayList<>();

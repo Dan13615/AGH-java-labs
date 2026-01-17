@@ -31,3 +31,42 @@
 2026-01-15 22:09:39.760 INFO  [main] StudentManagerApp - Group import completed: 2 groups loaded
 2026-01-15 22:09:58.391 INFO  [main] StudentManagerApp - User requested exit
 2026-01-15 22:09:58.392 INFO  [main] StudentManagerApp - === Application Shutting Down ===
+2026-01-16 10:20:23.165 INFO  [main] StudentManagerApp - === Student & Group Manager Application Starting ===
+2026-01-16 10:20:23.176 INFO  [main] StudentManagerApp - Java version: 17.0.17
+2026-01-16 10:20:23.180 INFO  [main] StudentManagerApp - Configuration loaded: delimiter=';', students='students.csv', groups='groups.csv'
+2026-01-16 10:20:41.717 INFO  [main] StudentManagerApp - Attempting to load students from: students.csv
+2026-01-16 10:20:41.729 DEBUG [main] i2jp.oop.Person - Created Person id=0000001 name=Anna Kowalska birth=15.03.2003 gender=OTHER
+2026-01-16 10:20:41.730 INFO  [main] i2jp.oop.Student - New Student created: index=S12345 personId=0000001
+2026-01-16 10:20:41.733 DEBUG [main] i2jp.oop.Student - Added grade=5.0 to student index=S12345 (now 1 grades)
+2026-01-16 10:20:41.735 DEBUG [main] i2jp.oop.Student - Added grade=4.5 to student index=S12345 (now 2 grades)
+2026-01-16 10:20:41.735 DEBUG [main] i2jp.oop.Student - Added grade=4.0 to student index=S12345 (now 3 grades)
+2026-01-16 10:20:41.737 DEBUG [main] i2jp.oop.Person - Created Person id=0000002 name=Piotr Nowak birth=02.09.2002 gender=OTHER
+2026-01-16 10:20:41.738 INFO  [main] i2jp.oop.Student - New Student created: index=S67890 personId=0000002
+2026-01-16 10:20:41.739 DEBUG [main] i2jp.oop.Student - Added grade=4.0 to student index=S67890 (now 1 grades)
+2026-01-16 10:20:41.740 DEBUG [main] i2jp.oop.Student - Added grade=4.0 to student index=S67890 (now 2 grades)
+2026-01-16 10:20:41.741 DEBUG [main] i2jp.oop.Student - Added grade=3.5 to student index=S67890 (now 3 grades)
+2026-01-16 10:20:41.743 DEBUG [main] i2jp.oop.Person - Created Person id=0000003 name=Julia Mazur birth=01.01.2004 gender=OTHER
+2026-01-16 10:20:41.743 INFO  [main] i2jp.oop.Student - New Student created: index=S11111 personId=0000003
+2026-01-16 10:20:41.744 DEBUG [main] i2jp.oop.Student - Added grade=3.5 to student index=S11111 (now 1 grades)
+2026-01-16 10:20:41.744 DEBUG [main] i2jp.oop.Student - Added grade=3.0 to student index=S11111 (now 2 grades)
+2026-01-16 10:20:41.745 INFO  [main] StudentManagerApp - Student import completed: 3 imported, 0 errors
+2026-01-16 10:20:58.810 INFO  [main] StudentManagerApp - Attempting to load groups from: groups.csv
+2026-01-16 10:20:58.813 INFO  [main] i2jp.oop.Group - Group created: name='G1', description='Java Monday'
+2026-01-16 10:20:58.813 INFO  [main] i2jp.oop.GroupRegistry - Assigned personId=0000001 to group=G1
+2026-01-16 10:20:58.813 INFO  [main] i2jp.oop.Group - Student index=S12345 added to group='G1'
+2026-01-16 10:20:58.813 INFO  [main] i2jp.oop.GroupRegistry - Assigned personId=0000002 to group=G1
+2026-01-16 10:20:58.813 INFO  [main] i2jp.oop.Group - Student index=S67890 added to group='G1'
+2026-01-16 10:20:58.814 INFO  [main] i2jp.oop.Group - Group created: name='G2', description='Java Friday'
+2026-01-16 10:20:58.814 INFO  [main] i2jp.oop.GroupRegistry - Assigned personId=0000003 to group=G2
+2026-01-16 10:20:58.814 INFO  [main] i2jp.oop.Group - Student index=S11111 added to group='G2'
+2026-01-16 10:20:58.814 INFO  [main] StudentManagerApp - Group import completed: 2 groups loaded
+2026-01-16 10:21:59.057 WARN  [main] StudentManagerApp - Student not found in assign operation: S12345
+2026-01-16 10:22:24.682 WARN  [main] StudentManagerApp - Student not found in assign operation: 1
+2026-01-16 10:22:26.660 WARN  [main] StudentManagerApp - Invalid menu option entered: '[A'
+2026-01-16 10:22:40.649 WARN  [main] i2jp.oop.Group - Cannot add student id=0000001 to group='G2' — already in group='G1'
+2026-01-16 10:23:02.791 WARN  [main] i2jp.oop.Group - Attempt to remove non-member index=S12345 from group='G2'
+2026-01-16 10:23:27.474 WARN  [main] i2jp.oop.Group - Cannot add student id=0000001 to group='G1' — already in group='G1'
+2026-01-16 10:23:44.636 DEBUG [main] i2jp.oop.GroupRegistry - Unassigned personId=0000001 from group=G1
+2026-01-16 10:23:44.637 INFO  [main] i2jp.oop.Group - Student index=S12345 removed from group='G1'
+2026-01-16 10:24:00.223 INFO  [main] i2jp.oop.GroupRegistry - Assigned personId=0000001 to group=G2
+2026-01-16 10:24:00.223 INFO  [main] i2jp.oop.Group - Student index=S12345 added to group='G2'

@@ -1,2 +1,3 @@
-G1;Java Monday;[0000001,0000002]
-G2;Java Friday;[0000003]
+G1;Java Friday;[0000003]
+G2;Java Monday;[0000001,0000002]
+G3;G3;[]

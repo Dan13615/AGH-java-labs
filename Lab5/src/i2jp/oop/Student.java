@@ -1,8 +1,10 @@
-// File: src/i2jp/oop/Student.java
-// Author: Student & Group Manager Implementation
 package i2jp.oop;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.OptionalDouble;
+import java.util.Set;
 
 public class Student extends Person {
     private final String indexNumber;

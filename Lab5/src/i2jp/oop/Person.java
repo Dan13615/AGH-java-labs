@@ -1,5 +1,3 @@
-// File: src/i2jp/oop/Person.java
-// Author: Student & Group Manager Implementation
 package i2jp.oop;
 
 import java.time.LocalDate;
@@ -8,24 +6,20 @@ import java.time.format.DateTimeFormatter;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class Person {
-    // --- Static fields and constants ---
     private static final AtomicLong COUNTER = new AtomicLong(1L);
     private static final DateTimeFormatter DMY = DateTimeFormatter.ofPattern("dd.MM.yyyy");
     private static final int ID_LEN = 7;
 
-    // --- Enum defined inside Person ---
     public enum Gender {
         MALE, FEMALE, OTHER
     }
 
-    // --- Instance fields ---
     private final String id;
     private String firstName;
     private String lastName;
     private LocalDate birthDate;
     private Gender gender;
 
-    // --- Constructor ---
     public Person(String firstName, String lastName, String birthDmy, Gender gender) {
         this.id = toBase36Padded(COUNTER.getAndIncrement(), ID_LEN);
         this.firstName = firstName;
@@ -34,7 +28,6 @@ public class Person {
         this.gender = gender;
     }
 
-    // --- Getters and setters ---
     public String getId() {
         return id;
     }
@@ -71,12 +64,10 @@ public class Person {
         this.gender = gender;
     }
 
-    // Helper to get formatted birth date
     public String getBirthDateFormatted() {
         return birthDate.format(DMY);
     }
 
-    // --- Utility methods ---
     public int getAgeYears() {
         return Period.between(birthDate, LocalDate.now()).getYears();
     }
@@ -86,14 +77,12 @@ public class Person {
         return firstName + " " + lastName + " (" + birthDate.format(DMY) + ", " + gender + ")";
     }
 
-    // --- Helper for ID formatting ---
     private static String toBase36Padded(long n, int len) {
         String s = Long.toString(n, 36).toUpperCase();
         int pad = len - s.length();
         return (pad > 0 ? "0".repeat(pad) : "") + s;
     }
 
-    // Reset counter for testing purposes
     public static void resetCounter() {
         COUNTER.set(1L);
     }

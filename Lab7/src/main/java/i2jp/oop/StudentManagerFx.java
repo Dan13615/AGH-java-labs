@@ -1,26 +1,48 @@
 package i2jp.oop;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import javafx.application.Application;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.layout.*;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
+import javafx.scene.control.ListView;
+import javafx.scene.control.Menu;
+import javafx.scene.control.MenuBar;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.Separator;
+import javafx.scene.control.SeparatorMenuItem;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
+import javafx.scene.control.TextInputDialog;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-
-import javafx.application.Application;
-import javafx.stage.Stage;
-import java.io.*;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
-import java.util.*;
-import java.util.stream.Collectors;
 
 // ==================== DOMAIN CLASSES ====================
 
@@ -29,21 +51,92 @@ class Student {
     private String lastName;
     private LocalDate birthDate;
     private String indexNumber;
-    private Map<String, Double> grades;
+    private String id;
+    private Double[] grades;
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("dd.MM.yyyy");
     private static final Set<Double> VALID_GRADES = Set.of(2.0, 3.0, 3.5, 4.0, 4.5, 5.0);
 
     public Student(String firstName, String lastName, LocalDate birthDate, String indexNumber) {
+        this(null, firstName, lastName, birthDate, indexNumber, "[]");
+    }
+
+    public Student(String firstName, String lastName, LocalDate birthDate, String indexNumber, String grades) {
+        this(null, firstName, lastName, birthDate, indexNumber, grades);
+    }
+
+    public Student(String id, String firstName, String lastName, LocalDate birthDate, String indexNumber,
+            String grades) {
         validateFirstName(firstName);
         validateLastName(lastName);
         validateBirthDate(birthDate);
         validateIndexNumber(indexNumber);
+        validateGrades(grades);
 
+        System.out.println("Creating student: " + firstName + " " + lastName + ", DOB: " + birthDate + ", Index: "
+                + indexNumber + ", Grades: " + grades);
+
+        this.id = id;
         this.firstName = firstName;
         this.lastName = lastName;
         this.birthDate = birthDate;
         this.indexNumber = indexNumber;
-        this.grades = new HashMap<>();
+        this.grades = fillGrades(grades);
+    }
+
+    private Double[] fillGrades(String grades) {
+        if (grades == null)
+            return new Double[0];
+
+        String s = grades.trim();
+        if (s.startsWith("[") && s.endsWith("]")) {
+            String inner = s.substring(1, s.length() - 1).trim();
+            if (inner.isEmpty())
+                return new Double[0];
+
+            String[] parts = inner.split(",");
+            Double[] result = new Double[parts.length];
+            for (int i = 0; i < parts.length; i++) {
+                String p = parts[i].trim();
+                if (p.isEmpty()) {
+                    result[i] = null;
+                    continue;
+                }
+                try {
+                    double val = Double.parseDouble(p);
+                    if (!VALID_GRADES.contains(val)) {
+                        throw new IllegalArgumentException("Invalid grade value: " + val);
+                    }
+                    result[i] = val;
+                } catch (NumberFormatException e) {
+                    throw new IllegalArgumentException("Invalid grade format: '" + p + "'");
+                }
+            }
+            return result;
+        }
+
+        // If not bracketed, try to parse as single value or comma-separated without
+        // brackets
+        if (s.isEmpty())
+            return new Double[0];
+        String[] parts = s.split(",");
+        Double[] result = new Double[parts.length];
+        for (int i = 0; i < parts.length; i++) {
+            String p = parts[i].trim();
+            if (p.isEmpty()) {
+                result[i] = null;
+                continue;
+            }
+            try {
+                double val = Double.parseDouble(p);
+                if (!VALID_GRADES.contains(val)) {
+                    throw new IllegalArgumentException("Invalid grade value: " + val);
+                }
+                result[i] = val;
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Invalid grade format: '" + p + "'");
+            }
+        }
+        return result;
     }
 
     private void validateFirstName(String firstName) {
@@ -73,11 +166,18 @@ class Student {
         }
     }
 
-    public void addGrade(String subject, double grade) {
+    private void validateGrades(String grades) {
+        if (grades == null)
+            throw new IllegalArgumentException("Grades cannot be null");
+    }
+
+    public void addGrade(double grade) {
         if (!VALID_GRADES.contains(grade)) {
             throw new IllegalArgumentException("Invalid grade: " + grade + ". Allowed: 2.0, 3.0, 3.5, 4.0, 4.5, 5.0");
         }
-        grades.put(subject, grade);
+        Double[] newGrades = Arrays.copyOf(this.grades, this.grades.length + 1);
+        newGrades[newGrades.length - 1] = grade;
+        this.grades = newGrades;
     }
 
     public String getFirstName() {
@@ -96,8 +196,12 @@ class Student {
         return indexNumber;
     }
 
-    public Map<String, Double> getGrades() {
-        return new HashMap<>(grades);
+    public String getId() {
+        return id;
+    }
+
+    public Double[] getGrades() {
+        return Arrays.copyOf(grades, grades.length);
     }
 
     public String getBirthDateFormatted() {
@@ -105,23 +209,69 @@ class Student {
     }
 
     public double getAverageGrade() {
-        return grades.isEmpty() ? 0.0 : grades.values().stream().mapToDouble(Double::doubleValue).average().orElse(0.0);
+        if (grades == null || grades.length == 0)
+            return 0;
+        double sum = 0.0;
+        int count = 0;
+        for (Double g : grades) {
+            if (g != null) {
+                sum += g;
+                count++;
+            }
+        }
+        return count == 0 ? 0 : sum / count;
+    }
+
+    private String gradesToCsvField() {
+        if (grades == null || grades.length == 0)
+            return "[]";
+        StringBuilder sb = new StringBuilder();
+        sb.append('[');
+        for (int i = 0; i < grades.length; i++) {
+            if (i > 0)
+                sb.append(',');
+            Double g = grades[i];
+            sb.append(g == null ? "" : g.toString());
+        }
+        sb.append(']');
+        return sb.toString();
     }
 
     public String toCsvLine() {
-        return String.join(",", firstName, lastName, getBirthDateFormatted(), indexNumber);
+        // semicolon format: id;index;first;last;date;[grades]
+        String idField = id == null ? "" : id;
+        return String.join(";", idField, indexNumber, firstName, lastName, getBirthDateFormatted(), gradesToCsvField());
     }
 
     public static Student fromCsvLine(String line) {
-        String[] parts = line.split(",");
-        if (parts.length < 4) {
-            throw new IllegalArgumentException("Invalid CSV format: expected 4 fields");
+        if (line == null || line.trim().isEmpty()) {
+            throw new IllegalArgumentException("CSV line is empty");
         }
+        String s = line.trim();
         try {
-            LocalDate date = LocalDate.parse(parts[2].trim(), DATE_FORMAT);
-            return new Student(parts[0].trim(), parts[1].trim(), date, parts[3].trim());
+            if (s.contains(";")) {
+                // Expected semicolon format: id;index;first;last;date;[grades]
+                String[] parts = s.split(";", 6);
+                if (parts.length < 5) {
+                    throw new IllegalArgumentException("Invalid semicolon CSV format: expected at least 5 fields");
+                }
+                LocalDate date = LocalDate.parse(parts[4].trim(), DATE_FORMAT);
+                String gradesField = parts.length >= 6 ? parts[5].trim() : "[]";
+                // parts: 0=id,1=index,2=first,3=last,4=date,5=grades
+                return new Student(parts[0].trim(), parts[2].trim(), parts[3].trim(), date, parts[1].trim(),
+                        gradesField);
+            } else {
+                // Split into at most 5 parts so the grades field (last) may contain commas
+                String[] parts = s.split(",", 5);
+                if (parts.length < 4) {
+                    throw new IllegalArgumentException("Invalid CSV format: expected at least 4 fields");
+                }
+                LocalDate date = LocalDate.parse(parts[2].trim(), DATE_FORMAT);
+                String gradesField = parts.length >= 5 ? parts[4].trim() : "[]";
+                return new Student(parts[0].trim(), parts[1].trim(), date, parts[3].trim(), gradesField);
+            }
         } catch (DateTimeParseException e) {
-            throw new IllegalArgumentException("Invalid date format: " + parts[2]);
+            throw new IllegalArgumentException("Invalid date format: " + e.getParsedString());
         }
     }
 
@@ -192,9 +342,11 @@ class Group {
 
 class StudentRegistry {
     private Map<String, Group> groups;
+    private Map<String, Student> studentsById;
 
     public StudentRegistry() {
         this.groups = new HashMap<>();
+        this.studentsById = new HashMap<>();
     }
 
     public void addGroup(Group group) {
@@ -231,11 +383,227 @@ class StudentRegistry {
                     continue;
                 try {
                     Student student = Student.fromCsvLine(line);
-                    targetGroup.addStudent(student);
+                    // register and add to target group (checks duplicate id)
+                    addStudentToGroup(student, targetGroup);
                     imported++;
                 } catch (Exception e) {
                     throw new IOException("Error on line: " + line + " - " + e.getMessage());
                 }
+            }
+        }
+    }
+
+    public void loadStudentsFile() throws IOException {
+        File studentsFile = new File("students.csv");
+        if (!studentsFile.exists())
+            throw new IOException("students.csv not found in project root");
+        try (BufferedReader reader = new BufferedReader(new FileReader(studentsFile))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.trim().isEmpty())
+                    continue;
+                Student s = Student.fromCsvLine(line);
+                if (s.getId() != null && !s.getId().isEmpty()) {
+                    if (studentsById.containsKey(s.getId())) {
+                        throw new IOException("Duplicate student id in students.csv: " + s.getId());
+                    }
+                    studentsById.put(s.getId(), s);
+                }
+            }
+        }
+    }
+
+    public void loadGroupsFile() throws IOException {
+        File groupsFile = new File("groups.csv");
+        if (!groupsFile.exists())
+            throw new IOException("groups.csv not found in project root");
+        // clear existing groups before loading
+        this.groups.clear();
+        try (BufferedReader reader = new BufferedReader(new FileReader(groupsFile))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.trim().isEmpty())
+                    continue;
+                String s = line.trim();
+                String[] parts = s.split(";", 3);
+                if (parts.length < 2)
+                    continue;
+                String groupName = parts[1].trim();
+                Group g = new Group(groupName, "");
+                this.addGroup(g);
+                if (parts.length == 3) {
+                    String members = parts[2].trim();
+                    if (members.startsWith("[") && members.endsWith("]")) {
+                        String inner = members.substring(1, members.length() - 1).trim();
+                        if (!inner.isEmpty()) {
+                            String[] ids = inner.split(",");
+                            for (String id : ids) {
+                                String tid = id.trim();
+                                Student st = studentsById.get(tid);
+                                if (st != null) {
+                                    try {
+                                        g.addStudent(st);
+                                    } catch (Exception e) {
+                                        System.err.println("Could not add student " + tid + " to group " + groupName
+                                                + ": " + e.getMessage());
+                                    }
+                                } else {
+                                    System.err.println("Unknown student id in groups.csv: " + tid);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    public void saveStudentsFile() throws IOException {
+        File studentsFile = new File("students.csv");
+        try (PrintWriter writer = new PrintWriter(new FileWriter(studentsFile))) {
+            for (Student s : studentsById.values()) {
+                writer.println(s.toCsvLine());
+            }
+        }
+    }
+
+    public void saveGroupsFile() throws IOException {
+        File groupsFile = new File("groups.csv");
+        try (PrintWriter writer = new PrintWriter(new FileWriter(groupsFile))) {
+            int gidx = 1;
+            for (Group g : getAllGroups()) {
+                String gid = "G" + gidx;
+                StringBuilder sb = new StringBuilder();
+                sb.append(gid).append(";").append(g.getName()).append(";");
+                sb.append('[');
+                List<Student> studs = g.getStudents();
+                for (int i = 0; i < studs.size(); i++) {
+                    if (i > 0)
+                        sb.append(',');
+                    String sid = studs.get(i).getId();
+                    sb.append(sid == null ? "" : sid);
+                }
+                sb.append(']');
+                writer.println(sb.toString());
+                gidx++;
+            }
+        }
+    }
+
+    public void addStudentToGroup(Student student, Group group) {
+        if (student.getId() != null && !student.getId().isEmpty()) {
+            if (studentsById.containsKey(student.getId())) {
+                throw new IllegalArgumentException("Student with id " + student.getId() + " already exists");
+            }
+            studentsById.put(student.getId(), student);
+        }
+        group.addStudent(student);
+    }
+
+    public Student getStudentById(String id) {
+        return studentsById.get(id);
+    }
+
+    public void loadFromProjectRoot() {
+        // Load students.csv and groups.csv from current working directory if present
+        File studentsFile = new File("students.csv");
+        File groupsFile = new File("groups.csv");
+        // Clear existing
+        this.groups.clear();
+        this.studentsById.clear();
+
+        if (studentsFile.exists()) {
+            try (BufferedReader reader = new BufferedReader(new FileReader(studentsFile))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    if (line.trim().isEmpty())
+                        continue;
+                    Student s = Student.fromCsvLine(line);
+                    if (s.getId() != null && !s.getId().isEmpty()) {
+                        if (studentsById.containsKey(s.getId())) {
+                            System.err.println("Duplicate student id in students.csv: " + s.getId() + " — skipping");
+                            continue;
+                        }
+                        studentsById.put(s.getId(), s);
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("Error loading students.csv: " + e.getMessage());
+            }
+        }
+
+        if (groupsFile.exists()) {
+            try (BufferedReader reader = new BufferedReader(new FileReader(groupsFile))) {
+                String line;
+                int gid = 1;
+                while ((line = reader.readLine()) != null) {
+                    if (line.trim().isEmpty())
+                        continue;
+                    String s = line.trim();
+                    String[] parts = s.split(";", 3);
+                    if (parts.length < 2)
+                        continue;
+                    String groupName = parts[1].trim();
+                    Group g = new Group(groupName, "");
+                    this.addGroup(g);
+                    if (parts.length == 3) {
+                        String members = parts[2].trim();
+                        if (members.startsWith("[") && members.endsWith("]")) {
+                            String inner = members.substring(1, members.length() - 1).trim();
+                            if (!inner.isEmpty()) {
+                                String[] ids = inner.split(",");
+                                for (String id : ids) {
+                                    String tid = id.trim();
+                                    Student st = studentsById.get(tid);
+                                    if (st != null) {
+                                        try {
+                                            g.addStudent(st);
+                                        } catch (Exception e) {
+                                            System.err.println("Could not add student " + tid + " to group " + groupName
+                                                    + ": " + e.getMessage());
+                                        }
+                                    } else {
+                                        System.err.println("Unknown student id in groups.csv: " + tid);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    gid++;
+                }
+            } catch (Exception e) {
+                System.err.println("Error loading groups.csv: " + e.getMessage());
+            }
+        }
+    }
+
+    public void saveProjectCsvs() throws IOException {
+        // write students.csv and groups.csv in current working directory
+        File studentsFile = new File("students.csv");
+        try (PrintWriter writer = new PrintWriter(new FileWriter(studentsFile))) {
+            for (Student s : studentsById.values()) {
+                writer.println(s.toCsvLine());
+            }
+        }
+
+        File groupsFile = new File("groups.csv");
+        try (PrintWriter writer = new PrintWriter(new FileWriter(groupsFile))) {
+            int gidx = 1;
+            for (Group g : getAllGroups()) {
+                String gid = "G" + gidx;
+                StringBuilder sb = new StringBuilder();
+                sb.append(gid).append(";").append(g.getName()).append(";");
+                sb.append('[');
+                List<Student> studs = g.getStudents();
+                for (int i = 0; i < studs.size(); i++) {
+                    if (i > 0)
+                        sb.append(',');
+                    String sid = studs.get(i).getId();
+                    sb.append(sid == null ? "" : sid);
+                }
+                sb.append(']');
+                writer.println(sb.toString());
+                gidx++;
             }
         }
     }
@@ -278,22 +646,23 @@ public class StudentManagerFx extends Application {
         stage.setTitle("Student & Group Manager — JavaFX");
         stage.show();
 
-        initializeSampleData();
+        // Try to load students.csv and groups.csv from project root
+        registry.loadFromProjectRoot();
+        groupsList.addAll(registry.getAllGroups());
+        if (groupsList.isEmpty()) {
+            updateStatus("No groups loaded from project files");
+        } else {
+            updateStatus("Loaded groups and students from project files");
+        }
     }
 
     private MenuBar createMenuBar(Stage stage) {
         MenuBar menuBar = new MenuBar();
 
         Menu fileMenu = new Menu("File");
-        MenuItem loadCsv = new MenuItem("Load CSV...");
-        MenuItem saveCsv = new MenuItem("Save CSV...");
         MenuItem exit = new MenuItem("Exit");
-
-        loadCsv.setOnAction(e -> handleLoadCsv(stage));
-        saveCsv.setOnAction(e -> handleSaveCsv(stage));
         exit.setOnAction(e -> stage.close());
-
-        fileMenu.getItems().addAll(loadCsv, saveCsv, new SeparatorMenuItem(), exit);
+        fileMenu.getItems().addAll(exit);
         menuBar.getMenus().add(fileMenu);
 
         return menuBar;
@@ -338,11 +707,11 @@ public class StudentManagerFx extends Application {
         studentsTable = new TableView<>(studentsList);
 
         TableColumn<Student, String> firstNameCol = new TableColumn<>("First Name");
-        firstNameCol.setCellValueFactory(new PropertyValueFactory<>("firstName"));
+        firstNameCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getFirstName()));
         firstNameCol.setPrefWidth(120);
 
         TableColumn<Student, String> lastNameCol = new TableColumn<>("Last Name");
-        lastNameCol.setCellValueFactory(new PropertyValueFactory<>("lastName"));
+        lastNameCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getLastName()));
         lastNameCol.setPrefWidth(120);
 
         TableColumn<Student, String> birthDateCol = new TableColumn<>("Birth Date");
@@ -351,7 +720,7 @@ public class StudentManagerFx extends Application {
         birthDateCol.setPrefWidth(100);
 
         TableColumn<Student, String> indexCol = new TableColumn<>("Index Number");
-        indexCol.setCellValueFactory(new PropertyValueFactory<>("indexNumber"));
+        indexCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getIndexNumber()));
         indexCol.setPrefWidth(120);
 
         TableColumn<Student, String> avgGradeCol = new TableColumn<>("Avg Grade");
@@ -405,6 +774,25 @@ public class StudentManagerFx extends Application {
 
         Separator sep1 = new Separator();
 
+        // Project file operations
+        Button loadStudentsBtn = new Button("Load Students");
+        loadStudentsBtn.setMaxWidth(Double.MAX_VALUE);
+        loadStudentsBtn.setOnAction(e -> handleLoadStudents());
+
+        Button loadGroupsBtn = new Button("Load Groups");
+        loadGroupsBtn.setMaxWidth(Double.MAX_VALUE);
+        loadGroupsBtn.setOnAction(e -> handleLoadGroups());
+
+        Button saveStudentsBtn = new Button("Save Students");
+        saveStudentsBtn.setMaxWidth(Double.MAX_VALUE);
+        saveStudentsBtn.setOnAction(e -> handleSaveStudents());
+
+        Button saveGroupsBtn = new Button("Save Group");
+        saveGroupsBtn.setMaxWidth(Double.MAX_VALUE);
+        saveGroupsBtn.setOnAction(e -> handleSaveGroups());
+
+        Separator sep0 = new Separator();
+
         // Transfer Student
         Label transferLabel = new Label("Transfer Student");
         transferLabel.setStyle("-fx-font-weight: bold;");
@@ -429,6 +817,8 @@ public class StudentManagerFx extends Application {
                 title,
                 addStudentLabel, firstNameField, lastNameField, birthDateField, indexField, addStudentBtn,
                 sep1,
+                loadStudentsBtn, loadGroupsBtn, saveStudentsBtn, saveGroupsBtn,
+                sep0,
                 transferLabel, targetGroupCombo, transferBtn,
                 sep2,
                 removeStudentBtn);
@@ -585,6 +975,48 @@ public class StudentManagerFx extends Application {
             } catch (IOException e) {
                 showError("Import Error", e.getMessage());
             }
+        }
+    }
+
+    private void handleLoadStudents() {
+        try {
+            registry.loadStudentsFile();
+            updateStatus("Loaded students.csv from project root");
+            showInfo("Load Success", "Loaded students.csv successfully");
+        } catch (Exception e) {
+            showError("Load Error", e.getMessage());
+        }
+    }
+
+    private void handleLoadGroups() {
+        try {
+            registry.loadGroupsFile();
+            groupsList.clear();
+            groupsList.addAll(registry.getAllGroups());
+            updateStatus("Loaded groups.csv from project root");
+            showInfo("Load Success", "Loaded groups.csv successfully");
+        } catch (Exception e) {
+            showError("Load Error", e.getMessage());
+        }
+    }
+
+    private void handleSaveStudents() {
+        try {
+            registry.saveStudentsFile();
+            updateStatus("Saved students.csv to project root");
+            showInfo("Save Success", "students.csv saved successfully");
+        } catch (Exception e) {
+            showError("Save Error", e.getMessage());
+        }
+    }
+
+    private void handleSaveGroups() {
+        try {
+            registry.saveGroupsFile();
+            updateStatus("Saved groups.csv to project root");
+            showInfo("Save Success", "groups.csv saved successfully");
+        } catch (Exception e) {
+            showError("Save Error", e.getMessage());
         }
     }
 

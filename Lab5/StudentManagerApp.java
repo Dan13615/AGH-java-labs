@@ -1,18 +1,30 @@
-// File: StudentManagerApp.java
-// Complete Student & Group Manager Console Application
-
-import i2jp.oop.*;
-import java.io.*;
-import java.nio.file.*;
-import java.util.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.OptionalDouble;
+import java.util.Properties;
+import java.util.Scanner;
+import java.util.Set;
 import java.util.regex.Pattern;
 
+import i2jp.oop.Group;
+import i2jp.oop.GroupRegistry;
+import i2jp.oop.Person;
+import i2jp.oop.Student;
+
 public class StudentManagerApp {
-    // Repositories
     private static final Map<String, Student> studentRepo = new HashMap<>();
     private static final Map<String, Group> groupRepo = new HashMap<>();
 
-    // Configuration
     private static Properties config = new Properties();
     private static final String CONFIG_FILE = "console.properties";
     private static String delimiter = ";";
@@ -80,8 +92,6 @@ public class StudentManagerApp {
         System.out.println("0)  Exit");
         System.out.print("Select option: ");
     }
-
-    // ===== CONFIGURATION MANAGEMENT =====
 
     private static void loadConfiguration() {
         Path configPath = Paths.get(CONFIG_FILE);
@@ -154,8 +164,6 @@ public class StudentManagerApp {
         }
     }
 
-    // ===== STUDENT CSV OPERATIONS =====
-
     private static void loadStudentsFromCsv() throws IOException {
         Path path = Paths.get(studentsFile);
         if (!Files.exists(path)) {
@@ -217,8 +225,6 @@ public class StudentManagerApp {
         System.out.println("Exported " + lines.size() + " students to " + studentsFile);
     }
 
-    // ===== GROUP CSV OPERATIONS =====
-
     private static void loadGroupsFromCsv() throws IOException {
         Path path = Paths.get(groupsFile);
         if (!Files.exists(path)) {
@@ -277,8 +283,6 @@ public class StudentManagerApp {
         Files.write(Paths.get(groupsFile), lines);
         System.out.println("Exported " + lines.size() + " groups to " + groupsFile);
     }
-
-    // ===== INTERACTIVE OPERATIONS =====
 
     private static void addNewStudent() {
         System.out.println("=== Add New Student ===");
@@ -455,15 +459,12 @@ public class StudentManagerApp {
                     s.average().orElse(0.0));
         }
 
-        // Group statistics
         OptionalDouble groupAvg = members.stream()
                 .mapToDouble(s -> s.average().orElse(0.0))
                 .average();
 
         System.out.printf("\nGroup average: %.2f%n", groupAvg.orElse(0.0));
     }
-
-    // ===== HELPER METHODS =====
 
     private static List<Double> parseGrades(String gradesRaw) {
         List<Double> grades = new ArrayList<>();
